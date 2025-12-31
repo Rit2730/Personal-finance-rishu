@@ -11,7 +11,7 @@ st.markdown("""
 <style>
 /* App background */
 .stApp {
-    background-color: #4b0f1e !important;
+    background-color: #wine !important;
 }
 
 /* Sidebar */
@@ -34,7 +34,7 @@ html, body, p, h1, h2, h3, h4, h5, h6, span, div {
 
 /* Buttons */
 .stButton > button {
-    background-color: #7b1e3b;
+    background-color: #wine;
     color: white;
     border-radius: 10px;
     font-weight: 600;
