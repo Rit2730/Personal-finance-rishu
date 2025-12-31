@@ -6,77 +6,67 @@ from datetime import date
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="Personal Finance Manager", layout="wide")
 
-# ---------------- PREMIUM UI CSS ----------------
+# ---------------- WINE THEME (MAXIMUM SUPPORTED) ----------------
 st.markdown("""
 <style>
-/* Main background */
+/* App background */
 .stApp {
-    background: radial-gradient(circle at top, #6a00ff 0%, #12001f 35%, #0b0014 100%);
-    color: #ffffff;
-}
-
-/* Glass cards */
-.glass {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 18px;
-    padding: 20px;
-    margin-bottom: 20px;
-    border: 1px solid rgba(255,255,255,0.15);
-}
-
-/* Metric cards */
-[data-testid="stMetric"] {
-    background: rgba(255,255,255,0.10);
-    border-radius: 16px;
-    padding: 20px;
-    border: 1px solid rgba(255,255,255,0.15);
+    background-color: #4b0f1e !important;
 }
 
 /* Sidebar */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #1a0033, #0b0014);
+    background-color: #3a0c17 !important;
+}
+
+/* Text */
+html, body, p, h1, h2, h3, h4, h5, h6, span, div {
+    color: #f5e9ec !important;
+}
+
+/* Metric cards */
+[data-testid="stMetric"] {
+    background-color: rgba(255,255,255,0.12);
+    padding: 18px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.25);
 }
 
 /* Buttons */
 .stButton > button {
-    background: linear-gradient(135deg, #8a2be2, #4b00ff);
+    background-color: #7b1e3b;
     color: white;
-    border-radius: 12px;
-    border: none;
-    padding: 10px 18px;
+    border-radius: 10px;
     font-weight: 600;
+    border: none;
 }
 
 .stButton > button:hover {
-    opacity: 0.9;
+    background-color: #91264a;
 }
 
 /* Inputs */
 input, textarea, select {
-    background-color: rgba(255,255,255,0.08) !important;
+    background-color: rgba(255,255,255,0.10) !important;
     color: white !important;
 }
 
 /* Tables */
 [data-testid="stDataFrame"] {
-    background: rgba(255,255,255,0.05);
-    border-radius: 12px;
+    background-color: rgba(255,255,255,0.05);
+    border-radius: 10px;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------- TITLE ----------------
-st.markdown("<h1 style='text-align:center;'>💜 Personal Finance Dashboard</h1>", unsafe_allow_html=True)
-st.markdown(
-    "<p style='text-align:center; color:#d0c7ff;'>A premium, all-in-one personal finance management system</p>",
-    unsafe_allow_html=True
-)
+st.title("🍷 Personal Finance Management System")
+st.caption("Income • Expenses • Investments • Loans • Net Worth")
 
-# ---------------- DATA SETUP ----------------
+# ---------------- USERS ----------------
 USERS = ["All", "Ritika", "Himanshu", "Seema"]
 
+# ---------------- DATA SETUP ----------------
 DATA_DIR = "data"
 os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -107,52 +97,52 @@ investments = pd.read_csv(FILES["investments"])
 loans = pd.read_csv(FILES["loans"])
 
 # ---------------- SIDEBAR ----------------
-st.sidebar.markdown("## 🔹 Navigation")
+st.sidebar.header("Navigation")
 section = st.sidebar.selectbox(
-    "",
+    "Select Module",
     ["Dashboard", "Income", "Expenses", "Investments", "Loans", "Calculators"]
 )
 
-user = st.sidebar.selectbox("User", USERS)
+user = st.sidebar.selectbox("Select User", USERS)
 
-def f(df):
-    return df if user == "All" else df[df["Person"] == user]
+def filter_user(df):
+    if user == "All":
+        return df
+    return df[df["Person"] == user]
 
 # ================= DASHBOARD =================
 if section == "Dashboard":
-    inc, exp, inv, ln = f(income), f(expenses), f(investments), f(loans)
+    inc = filter_user(income)
+    exp = filter_user(expenses)
+    inv = filter_user(investments)
+    ln = filter_user(loans)
 
     net_worth = (
         inc["Amount"].sum()
         - exp["Amount"].sum()
         + inv["Amount"].sum()
-        + ln[(ln["Loan Type"]=="Lent") & (ln["Status"]=="Open")]["Amount"].sum()
-        - ln[(ln["Loan Type"]=="Borrowed") & (ln["Status"]=="Open")]["Amount"].sum()
+        + ln[(ln["Loan Type"] == "Lent") & (ln["Status"] == "Open")]["Amount"].sum()
+        - ln[(ln["Loan Type"] == "Borrowed") & (ln["Status"] == "Open")]["Amount"].sum()
     )
 
-    st.markdown("<div class='glass'>", unsafe_allow_html=True)
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Income", f"₹ {inc['Amount'].sum():,.0f}")
     c2.metric("Expenses", f"₹ {exp['Amount'].sum():,.0f}")
     c3.metric("Investments", f"₹ {inv['Amount'].sum():,.0f}")
     c4.metric("Net Worth", f"₹ {net_worth:,.0f}")
-    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.divider()
 
     if not inc.empty:
-        st.markdown("<div class='glass'>", unsafe_allow_html=True)
-        st.subheader("Income Distribution")
+        st.subheader("Income by Type")
         st.bar_chart(inc.groupby("Income Type")["Amount"].sum())
-        st.markdown("</div>", unsafe_allow_html=True)
 
     if not inv.empty:
-        st.markdown("<div class='glass'>", unsafe_allow_html=True)
-        st.subheader("Investment Allocation")
+        st.subheader("Investments by Category")
         st.bar_chart(inv.groupby("Investment Type")["Amount"].sum())
-        st.markdown("</div>", unsafe_allow_html=True)
 
 # ================= INCOME =================
 elif section == "Income":
-    st.markdown("<div class='glass'>", unsafe_allow_html=True)
     st.subheader("Add Income")
 
     p = st.selectbox("Person", USERS[1:])
@@ -163,51 +153,45 @@ elif section == "Income":
     if st.button("Save Income"):
         income.loc[len(income)] = [d, p, t, a]
         income.to_csv(FILES["income"], index=False)
-        st.success("Income saved")
+        st.success("Income added")
 
-    st.markdown("</div>", unsafe_allow_html=True)
     st.dataframe(income)
 
 # ================= EXPENSE =================
 elif section == "Expenses":
-    st.markdown("<div class='glass'>", unsafe_allow_html=True)
     st.subheader("Add Expense")
 
     p = st.selectbox("Person", USERS[1:])
-    c = st.text_input("Category")
+    c = st.text_input("Category (Food, Rent, EMI, etc)")
     a = st.number_input("Amount", min_value=0.0)
     d = st.date_input("Date", date.today())
 
     if st.button("Save Expense"):
         expenses.loc[len(expenses)] = [d, p, c, a]
         expenses.to_csv(FILES["expenses"], index=False)
-        st.success("Expense saved")
+        st.success("Expense added")
 
-    st.markdown("</div>", unsafe_allow_html=True)
     st.dataframe(expenses)
 
 # ================= INVESTMENTS =================
 elif section == "Investments":
-    st.markdown("<div class='glass'>", unsafe_allow_html=True)
     st.subheader("Add Investment")
 
     p = st.selectbox("Person", USERS[1:])
-    i = st.text_input("Investment Type (MF, ETF, FD, etc)")
+    i = st.text_input("Investment Type (MF, ETF, FD, RD, PPF, Insurance, etc)")
     a = st.number_input("Amount", min_value=0.0)
     d = st.date_input("Date", date.today())
 
     if st.button("Save Investment"):
         investments.loc[len(investments)] = [d, p, i, a]
         investments.to_csv(FILES["investments"], index=False)
-        st.success("Investment saved")
+        st.success("Investment added")
 
-    st.markdown("</div>", unsafe_allow_html=True)
     st.dataframe(investments)
 
 # ================= LOANS =================
 elif section == "Loans":
-    st.markdown("<div class='glass'>", unsafe_allow_html=True)
-    st.subheader("Loans")
+    st.subheader("Loans Tracking")
 
     p = st.selectbox("Person", USERS[1:])
     t = st.selectbox("Loan Type", ["Lent", "Borrowed"])
@@ -218,22 +202,18 @@ elif section == "Loans":
     if st.button("Save Loan"):
         loans.loc[len(loans)] = [d, p, t, a, s]
         loans.to_csv(FILES["loans"], index=False)
-        st.success("Loan saved")
+        st.success("Loan entry saved")
 
-    st.markdown("</div>", unsafe_allow_html=True)
     st.dataframe(loans)
 
 # ================= CALCULATORS =================
 elif section == "Calculators":
-    st.markdown("<div class='glass'>", unsafe_allow_html=True)
     st.subheader("Compound Interest Calculator")
 
     p = st.number_input("Principal", min_value=0.0)
-    r = st.number_input("Rate (%)", min_value=0.0)
+    r = st.number_input("Annual Rate (%)", min_value=0.0)
     t = st.number_input("Years", min_value=0.0)
 
     if st.button("Calculate"):
-        fv = p * ((1 + r/100) ** t)
+        fv = p * ((1 + r / 100) ** t)
         st.success(f"Future Value: ₹ {fv:,.2f}")
-
-    st.markdown("</div>", unsafe_allow_html=True)
